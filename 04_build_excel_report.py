@@ -1,13 +1,4 @@
-"""
-RetailPulse — Excel Report Builder
-Pulls cleaned + flagged data from SQLite and builds a formula-driven Excel
-workbook: raw data sheet, SUMIFS-based summary pivots, and a data-quality
-flag sheet with conditional formatting. No hardcoded aggregate values —
-every summary number is a live formula referencing the raw data sheet.
 
-Run: python3 04_build_excel_report.py
-Output: ../output/RetailPulse_Management_Report.xlsx
-"""
 
 import sqlite3
 import os
@@ -55,10 +46,7 @@ rows = conn.execute("""
     ORDER BY o.order_date
     LIMIT 1500
 """).fetchall()
-# NOTE: capped at 1500 rows for this Excel deliverable. Real analysts pre-aggregate
-# rather than push an entire fact table through row-level Excel formulas — the full
-# 8,600+ row dataset is queried directly via SQL (see sql/02_advanced_analytics.sql)
-# and exported to CSV in output/ by scripts/02_run_analytics.py.
+
 
 cols = list(rows[0].keys())
 cols.append("is_first_line_of_order")  # helper column for distinct order counts
@@ -77,9 +65,7 @@ rows = row_dicts
 
 wb = Workbook()
 
-# ============================================================
-# SHEET 1: Raw Data (feeds all formulas below)
-# ============================================================
+
 ws_raw = wb.active
 ws_raw.title = "Raw_Data"
 
@@ -110,9 +96,7 @@ def col_letter(name):
 
 last_row = n_rows
 
-# ============================================================
-# SHEET 2: Monthly Summary (SUMIFS/COUNTIFS formulas)
-# ============================================================
+
 ws_month = wb.create_sheet("Monthly_Summary")
 ws_month["A1"] = "RetailPulse — Monthly Management Summary"
 ws_month["A1"].font = TITLE_FONT
@@ -131,8 +115,7 @@ status_col = col_letter("status")
 total_col = col_letter("line_total")
 first_line_col = col_letter("is_first_line_of_order")
 
-# Bounded range strings (never full-column — full-column SUMIFS/SUMPRODUCT is extremely
-# slow to recalculate at scale and is a common performance mistake in real workbooks)
+
 rng = lambda col: f'Raw_Data!${col}$2:${col}${last_row}'
 
 for i, month in enumerate(months, start=4):
@@ -168,9 +151,7 @@ for i, month in enumerate(months, start=4):
 for i, w in enumerate([14, 20, 14, 18, 16], start=1):
     ws_month.column_dimensions[get_column_letter(i)].width = w
 
-# ============================================================
-# SHEET 3: Category Summary (SUMIFS by normalized category)
-# ============================================================
+
 ws_cat = wb.create_sheet("Category_Summary")
 ws_cat["A1"] = "RetailPulse — Category Performance (Normalized)"
 ws_cat["A1"].font = TITLE_FONT
@@ -211,9 +192,7 @@ ws_cat.cell(row=last_cat_row + 1, column=2).font = Font(name=FONT, bold=True)
 for i, w in enumerate([20, 18, 20], start=1):
     ws_cat.column_dimensions[get_column_letter(i)].width = w
 
-# ============================================================
-# SHEET 4: Data Quality Flags (formula-based detection + conditional formatting)
-# ============================================================
+
 ws_dq = wb.create_sheet("Data_Quality_Flags")
 ws_dq["A1"] = "RetailPulse — Row-Level Data Quality Flags"
 ws_dq["A1"].font = TITLE_FONT
@@ -234,8 +213,7 @@ item_id_col = col_letter("order_item_id")
 
 for idx, r in enumerate(rows, start=2):  # idx = row number in Raw_Data
     out_row = idx + 3  # start DQ data at row 5 when idx=2 -> out_row=5
-    # order_item_id is an identifier/label (not a computed result), same convention as
-    # copying a primary key into a lookup sheet — pulled via formula so it stays in sync
+   c
     ws_dq.cell(row=out_row, column=1, value=f'=Raw_Data!{item_id_col}{idx}').font = BODY_FONT
     ws_dq.cell(row=out_row, column=2, value=f'=IF(Raw_Data!{qty_col}{idx}<0,"FLAG","ok")').font = BODY_FONT
     ws_dq.cell(row=out_row, column=3,
@@ -244,9 +222,7 @@ for idx, r in enumerate(rows, start=2):  # idx = row number in Raw_Data
         ws_dq.cell(row=out_row, column=c).border = BORDER
 
 last_dq_row = len(rows) + 4
-# Static highlight fill applied directly (rather than a sheet-wide ConditionalFormattingList
-# rule, which is expensive for LibreOffice to recalculate at this row count) — flags are
-# still 100% formula-driven; only the color application method changed.
+
 FLAG_FILL = PatternFill("solid", fgColor="FFC7CE")
 FLAG_FONT = Font(name=FONT, color="9C0006")
 for idx, r in enumerate(rows, start=2):
