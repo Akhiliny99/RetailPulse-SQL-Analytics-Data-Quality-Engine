@@ -1,0 +1,3 @@
+check_name,severity,affected_rows,pct_of_table
+DQ2_MISSING_EMAIL,MEDIUM,41,7.96
+DQ2_MISSING_CITY,LOW,51,9.9
