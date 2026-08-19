@@ -1,16 +1,4 @@
-"""
-RetailPulse — Data Generator
-Creates a realistic, intentionally messy retail dataset and loads it into SQLite.
 
-Tables:
-  customers  - has duplicates, inconsistent casing/whitespace, missing emails
-  products   - has inconsistent category labels, some negative/null prices
-  orders     - has some orphaned customer_ids (referential integrity issue), out-of-range dates
-  order_items - has some negative quantities, some orphaned product_ids, price mismatches
-
-Run: python3 01_generate_data.py
-Output: ../data/retailpulse.db
-"""
 
 import sqlite3
 import random
