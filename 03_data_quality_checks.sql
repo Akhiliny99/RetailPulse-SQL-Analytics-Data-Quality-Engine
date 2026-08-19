@@ -1,13 +1,4 @@
--- ============================================================
--- RetailPulse — Data Quality & Validation Framework
--- Each check below detects a specific, real-world data issue.
--- Severity is tagged so results can be triaged.
--- ============================================================
 
--- --------------------------------------------------------------
--- DQ1. Duplicate customers (same name + email, different IDs)
--- Severity: HIGH — inflates customer counts, skews LTV metrics
--- --------------------------------------------------------------
 SELECT
     'DQ1_DUPLICATE_CUSTOMER' AS check_name,
     'HIGH' AS severity,
@@ -21,10 +12,6 @@ GROUP BY TRIM(LOWER(full_name)), email
 HAVING COUNT(*) > 1;
 
 
--- --------------------------------------------------------------
--- DQ2. Missing critical fields (null email, null city)
--- Severity: MEDIUM — limits marketing/segmentation ability
--- --------------------------------------------------------------
 SELECT
     'DQ2_MISSING_EMAIL' AS check_name,
     'MEDIUM' AS severity,
@@ -42,10 +29,6 @@ FROM customers
 WHERE city IS NULL;
 
 
--- --------------------------------------------------------------
--- DQ3. Inconsistent categorical values (city / category casing & whitespace)
--- Severity: MEDIUM — breaks GROUP BY aggregations, undercounts real groups
--- --------------------------------------------------------------
 SELECT
     'DQ3_INCONSISTENT_CITY' AS check_name,
     'MEDIUM' AS severity,
@@ -70,11 +53,6 @@ GROUP BY TRIM(LOWER(category))
 HAVING COUNT(DISTINCT category) > 1;
 
 
--- --------------------------------------------------------------
--- DQ4. Referential integrity breaks (orphaned foreign keys)
--- Severity: CRITICAL — orders/items pointing to non-existent customers/products
---           will silently drop out of INNER JOIN reports, undercounting revenue
--- --------------------------------------------------------------
 SELECT
     'DQ4_ORPHANED_ORDER_CUSTOMER' AS check_name,
     'CRITICAL' AS severity,
@@ -93,11 +71,6 @@ FROM order_items oi
 LEFT JOIN products p ON p.product_id = oi.product_id
 WHERE p.product_id IS NULL;
 
-
--- --------------------------------------------------------------
--- DQ5. Invalid numeric values (negative prices, negative quantities, nulls)
--- Severity: HIGH — directly corrupts revenue calculations if not filtered
--- --------------------------------------------------------------
 SELECT 'DQ5_NEGATIVE_PRICE' AS check_name, 'HIGH' AS severity, COUNT(*) AS affected_rows
 FROM products WHERE unit_price < 0
 UNION ALL
@@ -108,11 +81,6 @@ SELECT 'DQ5_NEGATIVE_QUANTITY', 'HIGH', COUNT(*)
 FROM order_items WHERE quantity < 0;
 
 
--- --------------------------------------------------------------
--- DQ6. Price mismatches between order_items and current product price
--- Severity: MEDIUM — could indicate stale price capture at time of sale,
---           or a data entry error; needs business rule to confirm which
--- --------------------------------------------------------------
 SELECT
     'DQ6_PRICE_MISMATCH' AS check_name,
     'MEDIUM' AS severity,
@@ -128,10 +96,6 @@ WHERE p.unit_price IS NOT NULL
 LIMIT 20;   -- sample; remove LIMIT for full audit
 
 
--- --------------------------------------------------------------
--- DQ7. Out-of-range / implausible dates
--- Severity: HIGH — future-dated orders will corrupt trend reports
--- --------------------------------------------------------------
 SELECT
     'DQ7_FUTURE_DATED_ORDER' AS check_name,
     'HIGH' AS severity,
@@ -140,10 +104,6 @@ SELECT
 FROM orders
 WHERE order_date > date('now');
 
-
--- --------------------------------------------------------------
--- DQ8. Summary scorecard — one row per check, for a management report
--- --------------------------------------------------------------
 SELECT 'Duplicate customers' AS issue, COUNT(*) AS count FROM (
     SELECT TRIM(LOWER(full_name)), email FROM customers
     WHERE email IS NOT NULL GROUP BY 1,2 HAVING COUNT(*) > 1
