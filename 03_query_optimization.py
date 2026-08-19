@@ -1,10 +1,4 @@
-"""
-RetailPulse — Query Optimization Demo
-Shows a slow query, its execution plan, adds an index, then shows the
-improved plan and measures actual wall-clock time difference.
 
-Run: python3 03_query_optimization.py
-"""
 
 import sqlite3
 import time
