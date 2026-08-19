@@ -1,10 +1,4 @@
-"""
-RetailPulse — Query Runner
-Executes all analytics + data quality queries and prints readable results.
-Also exports results to CSV in ../output/ for use in Excel.
 
-Run: python3 02_run_analytics.py
-"""
 
 import sqlite3
 import csv
